@@ -81,21 +81,21 @@ pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
         syn::Error::new(e.span(), format!("{}{}", e, USAGE_EXAMPLE))
     })?;
 
+    let name = &input.ident;
+
     // Validate that arrays are not empty
     if attrs.idempotency.is_empty() {
-        return Err(syn::Error::new(
-            proc_macro2::Span::call_site(),
+        return Err(syn::Error::new_spanned(
+            &input,
             format!("idempotency array cannot be empty{}", USAGE_EXAMPLE)
         ).into());
     }
     if attrs.correlation.is_empty() {
-        return Err(syn::Error::new(
-            proc_macro2::Span::call_site(),
+        return Err(syn::Error::new_spanned(
+            &input,
             format!("correlation array cannot be empty{}", USAGE_EXAMPLE)
         ).into());
     }
-
-    let name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     // Basic Event trait implementations

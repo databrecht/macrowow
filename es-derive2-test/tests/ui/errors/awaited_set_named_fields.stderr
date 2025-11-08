@@ -1,0 +1,13 @@
+error: Each enum variant must wrap exactly one event type
+
+       Example usage:
+         #[derive(AwaitedSet)]
+         enum TransferResponse {
+             Transferred(Transferred),
+             Failed(TransferFailed),
+         }
+
+ --> tests/ui/errors/awaited_set_named_fields.rs:4:5
+  |
+4 |     Success { data: String },  // Named fields not allowed
+  |     ^^^^^^^

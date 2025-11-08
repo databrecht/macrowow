@@ -3,12 +3,13 @@ use quote::quote;
 use syn::DeriveInput;
 
 const USAGE_EXAMPLE: &str = r#"
-Usage example:
-#[derive(AwaitedSet)]
-enum TransferResponse {
-    Transferred(Transferred),
-    Failed(TransferFailed),
-}
+
+Example usage:
+  #[derive(AwaitedSet)]
+  enum TransferResponse {
+      Transferred(Transferred),
+      Failed(TransferFailed),
+  }
 
 "#;
 
@@ -23,7 +24,7 @@ pub(crate) fn awaited_set_impl(input: DeriveInput) -> Result {
         _ => {
             return Err(syn::Error::new_spanned(
                 &name,
-                format!("AwaitedSet only supports enums. {}", USAGE_EXAMPLE)
+                format!("AwaitedSet only supports enums{}", USAGE_EXAMPLE)
             ).into());
         }
     };
@@ -40,7 +41,7 @@ pub(crate) fn awaited_set_impl(input: DeriveInput) -> Result {
             _ => {
                 return Err(syn::Error::new_spanned(
                     variant_name,
-                    format!("Each enum variant must wrap exactly one event type. {}", USAGE_EXAMPLE)
+                    format!("Each enum variant must wrap exactly one event type{}", USAGE_EXAMPLE)
                 ).into());
             }
         };

@@ -1,0 +1,13 @@
+error: AwaitedSet only supports enums
+
+       Example usage:
+         #[derive(AwaitedSet)]
+         enum TransferResponse {
+             Transferred(Transferred),
+             Failed(TransferFailed),
+         }
+
+ --> tests/ui/errors/awaited_set_on_struct.rs:3:12
+  |
+3 | pub struct NotAnEnum {
+  |            ^^^^^^^^^
