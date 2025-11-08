@@ -1,69 +1,50 @@
-use darling::{ast, FromDeriveInput, FromVariant};
 use manyhow::{ensure, Result};
 use quote::quote;
 use syn::DeriveInput;
 
-#[derive(FromVariant, Clone)]
-#[darling(attributes(es))]
-struct AwaitedSetVariantParams {
-    ident: syn::Ident,
-    fields: ast::Fields<syn::Type>,
-}
-
-#[derive(FromDeriveInput, Clone)]
-#[darling(
-    attributes(es),
-    forward_attrs(allow, cfg, clippy),
-    supports(enum_newtype)
-)]
-struct AwaitedSetDerive {
-    ident: syn::Ident,
-    attrs: Vec<syn::Attribute>,
-    data: ast::Data<AwaitedSetVariantParams, ()>,
-    generics: syn::Generics,
-}
-
-impl AwaitedSetDerive {
-    fn try_new(input: DeriveInput) -> Result<Self> {
-        Ok(Self::from_derive_input(&input).map_err(|e| {
-            syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("{}", e)
-            )
-        })?)
-    }
-}
-
-pub(crate) fn awaited_set_impl(input: DeriveInput) -> Result {
-    let derived = AwaitedSetDerive::try_new(input)?;
-
-    let name = &derived.ident;
-    let (impl_generics, ty_generics, where_clause) = derived.generics.split_for_impl();
-    let attrs = &derived.attrs;
-
-    const USAGE_EXAMPLE: &str = "\
+const USAGE_EXAMPLE: &str = r#"
 Usage example:
 #[derive(AwaitedSet)]
 enum TransferResponse {
     Transferred(Transferred),
     Failed(TransferFailed),
-}";
+}
 
-    // Extract variants
-    let variants = derived.data.as_ref().take_enum()
-        .ok_or_else(|| syn::Error::new_spanned(
-            &name,
-            format!("AwaitedSet only supports enums. {}", USAGE_EXAMPLE)
-        ))?;
+"#;
+
+pub(crate) fn awaited_set_impl(input: DeriveInput) -> Result {
+    let name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let attrs = &input.attrs;
+
+    // Extract variants from enum
+    let data_enum = match &input.data {
+        syn::Data::Enum(data) => data,
+        _ => {
+            return Err(syn::Error::new_spanned(
+                &name,
+                format!("AwaitedSet only supports enums. {}", USAGE_EXAMPLE)
+            ).into());
+        }
+    };
 
     let mut variant_info = Vec::new();
-    for v in variants {
-        let variant_name = &v.ident;
-        let event_type = v.fields.fields.first()
-            .ok_or_else(|| syn::Error::new_spanned(
-                variant_name,
-                format!("Each enum variant must wrap exactly one event type. {}", USAGE_EXAMPLE)
-            ))?;
+    for variant in &data_enum.variants {
+        let variant_name = &variant.ident;
+
+        // Ensure variant has exactly one unnamed field (newtype pattern)
+        let event_type = match &variant.fields {
+            syn::Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
+                &fields.unnamed.first().unwrap().ty
+            }
+            _ => {
+                return Err(syn::Error::new_spanned(
+                    variant_name,
+                    format!("Each enum variant must wrap exactly one event type. {}", USAGE_EXAMPLE)
+                ).into());
+            }
+        };
+
         variant_info.push((variant_name, event_type));
     }
 

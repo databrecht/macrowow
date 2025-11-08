@@ -1,11 +1,9 @@
 use es_core::*;
 
-#[derive(Debug, Clone, es_derive2::Event)]
-#[es(injectable(awaits(TransferResponse, PaymentResponse)))]
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
+#[es(awaits = [TransferResponse, PaymentResponse], idempotency = ["request_id"], correlation = ["user_id"])]
 pub struct TransferRequested {
-    #[es(idempotency)]
     pub request_id: String,
-    #[es(correlation)]
     pub user_id: String,
     pub amount: u64,
 }

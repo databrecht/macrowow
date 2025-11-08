@@ -1,0 +1,11 @@
+error: unknown field `await`, did you mean `awaits`?
+
+       Example usage:
+         #[derive(InjectableEvent)]
+         #[es(awaits = [PaymentResponse], idempotency = ["user.id"], correlation = ["transaction_id"], status = { exists })]
+         pub struct PaymentRequested { ... }
+
+ --> tests/ui/errors/typo_await_not_awaits.rs:3:6
+  |
+3 | #[es(await = [FooEvent], idempotency = ["id"], correlation = ["id"])]  // ❌ Should be "awaits"
+  |      ^^^^^

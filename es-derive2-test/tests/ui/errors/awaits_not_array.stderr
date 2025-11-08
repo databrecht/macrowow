@@ -1,0 +1,11 @@
+error: expected square brackets
+
+       Example usage:
+         #[derive(InjectableEvent)]
+         #[es(awaits = [PaymentResponse], idempotency = ["user.id"], correlation = ["transaction_id"], status = { exists })]
+         pub struct PaymentRequested { ... }
+
+ --> tests/ui/errors/awaits_not_array.rs:3:15
+  |
+3 | #[es(awaits = FooEvent, idempotency = ["id"], correlation = ["id"])]
+  |               ^^^^^^^^

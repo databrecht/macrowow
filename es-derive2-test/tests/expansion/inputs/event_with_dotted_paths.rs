@@ -11,15 +11,10 @@ pub struct PaymentId {
 }
 
 /// Event demonstrating dotted path access for idempotency and correlation
-#[derive(Debug, Clone, es_derive2::Event)]
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
+#[es(idempotency = ["payment.id"], correlation = ["user.id"], status = { exists })]
 pub struct PaymentProcessed {
-    // Nested field idempotency using dotted path
-    #[es(idempotency(id))]
     pub payment: PaymentId,
-
-    // Nested field correlation with explicit status
-    #[es(correlation(id, exists))]
     pub user: UserId,
-
     pub amount: u64,
 }

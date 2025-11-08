@@ -28,7 +28,7 @@ pub struct PaymentAuthorizationReleaseRequestDispatched {
 }
 
 // Placeholder types for awaits
-#[derive(Debug, Clone, es_derive2::Event)]
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
 pub struct TransferRequestedResponse {
     pub status: String,
 }
@@ -38,7 +38,7 @@ pub enum TransferRequested {
     Response(TransferRequestedResponse),
 }
 
-#[derive(Debug, Clone, es_derive2::Event)]
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
 pub struct PaymentProcessedResponse {
     pub status: String,
 }

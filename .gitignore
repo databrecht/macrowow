@@ -17,5 +17,5 @@ Cargo.lock
 .DS_Store
 
 # Test outputs
-tests/expand/*.expanded.rs
-tests/expanded_simple/
+tests/expansion/inputs/*.expanded.rs
+tests/expansion/outputs/

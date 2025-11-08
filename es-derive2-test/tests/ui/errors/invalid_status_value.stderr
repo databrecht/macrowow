@@ -1,0 +1,11 @@
+error: unknown field `invalid`
+
+       Example usage:
+         #[derive(InjectableEvent)]
+         #[es(awaits = [PaymentResponse], idempotency = ["user.id"], correlation = ["transaction_id"], status = { exists })]
+         pub struct PaymentRequested { ... }
+
+ --> tests/ui/errors/invalid_status_value.rs:3:71
+  |
+3 | #[es(idempotency = ["user.id"], correlation = ["user.id"], status = { invalid })]
+  |                                                                       ^^^^^^^

@@ -11,3 +11,4 @@ eyre = "0.6"
 [dev-dependencies]
 insta = "1.0"
 macrotest = "1.0"
+trybuild = "1.0.114"

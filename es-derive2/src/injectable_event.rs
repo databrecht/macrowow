@@ -43,19 +43,57 @@ enum CorrelationStatus {
 #[derive(ExtractAttributes)]
 #[deluxe(attributes(es))]
 struct InjectableEventAttrs {
+    /// Event sets this event awaits a response from
+    ///
+    /// Example: #[es(awaits = [TransferResponse, PaymentResponse])]
     #[deluxe(default)]
     awaits: Option<Vec<syn::Path>>,
-    #[deluxe(default)]
-    idempotency: Option<Vec<syn::LitStr>>,
-    #[deluxe(default)]
-    correlation: Option<Vec<syn::LitStr>>,
+
+    /// Field paths for generating idempotency keys (required)
+    ///
+    /// Example: #[es(idempotency = ["user.id", "payment.id"])]
+    idempotency: Vec<syn::LitStr>,
+
+    /// Field paths for generating correlation IDs (required)
+    ///
+    /// Example: #[es(correlation = ["user.id"])]
+    correlation: Vec<syn::LitStr>,
+
+    /// Expected correlation group status: new, exists, or any
+    ///
+    /// Example: #[es(status = { exists })]
     #[deluxe(default)]
     status: Option<CorrelationStatus>,
 }
 
+const USAGE_EXAMPLE: &str = r#"
+
+Example usage:
+  #[derive(InjectableEvent)]
+  #[es(awaits = [PaymentResponse], idempotency = ["user.id"], correlation = ["transaction_id"], status = { exists })]
+  pub struct PaymentRequested { ... }
+
+"#;
+
 pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
     // Extract attributes using Deluxe
-    let attrs: InjectableEventAttrs = deluxe::extract_attributes(&mut input)?;
+    let attrs: InjectableEventAttrs = deluxe::extract_attributes(&mut input).map_err(|e| {
+        syn::Error::new(e.span(), format!("{}{}", e, USAGE_EXAMPLE))
+    })?;
+
+    // Validate that arrays are not empty
+    if attrs.idempotency.is_empty() {
+        return Err(syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("idempotency array cannot be empty{}", USAGE_EXAMPLE)
+        ).into());
+    }
+    if attrs.correlation.is_empty() {
+        return Err(syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("correlation array cannot be empty{}", USAGE_EXAMPLE)
+        ).into());
+    }
 
     let name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -88,15 +126,13 @@ pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
 
     let mut output = event_impl;
 
-    // Implement Idempotent if configured
-    if let Some(idempotency_impl) = generate_idempotency_impl(&name, &impl_generics, &ty_generics, &where_clause, &attrs.idempotency)? {
-        output.extend(idempotency_impl);
-    }
+    // Implement Idempotent (required)
+    let idempotency_impl = generate_idempotency_impl(&name, &impl_generics, &ty_generics, &where_clause, &attrs.idempotency)?;
+    output.extend(idempotency_impl);
 
-    // Implement Correlated if configured
-    if let Some(correlation_impl) = generate_correlation_impl(&name, &impl_generics, &ty_generics, &where_clause, &attrs.correlation, &attrs.status)? {
-        output.extend(correlation_impl);
-    }
+    // Implement Correlated (required)
+    let correlation_impl = generate_correlation_impl(&name, &impl_generics, &ty_generics, &where_clause, &attrs.correlation, &attrs.status)?;
+    output.extend(correlation_impl);
 
     Ok(output)
 }
@@ -110,22 +146,18 @@ fn generate_idempotency_impl(
     impl_generics: &syn::ImplGenerics,
     ty_generics: &syn::TypeGenerics,
     where_clause: &Option<&syn::WhereClause>,
-    idempotency_paths: &Option<Vec<syn::LitStr>>,
-) -> Result<Option<proc_macro2::TokenStream>> {
-    let Some(path_strs) = idempotency_paths else {
-        return Ok(None);
-    };
-
+    idempotency_paths: &Vec<syn::LitStr>,
+) -> Result<proc_macro2::TokenStream> {
     let mut field_accessors = BTreeMap::new();
 
-    for path_str in path_strs {
+    for path_str in idempotency_paths {
         let field_accessor = parse_dotted_path(&path_str.value())?;
         field_accessors.insert(field_accessor.to_string(), field_accessor);
     }
 
     let field_accessor_iter = field_accessors.values();
 
-    Ok(Some(quote! {
+    Ok(quote! {
         #[automatically_derived]
         impl #impl_generics ::es_core::Idempotent for #name #ty_generics #where_clause {
             fn get_idempotency_key(&self) -> Result<::es_core::IdempotencyKey, ::es_core::IdempotencyKeyError> {
@@ -133,7 +165,7 @@ fn generate_idempotency_impl(
                 ::es_core::IdempotencyKey::try_new(format!("{}-{}", stringify!(#name), user_parts.join("-")))
             }
         }
-    }))
+    })
 }
 
 /// Generate the `Correlated` trait implementation.
@@ -145,16 +177,12 @@ fn generate_correlation_impl(
     impl_generics: &syn::ImplGenerics,
     ty_generics: &syn::TypeGenerics,
     where_clause: &Option<&syn::WhereClause>,
-    correlation_paths: &Option<Vec<syn::LitStr>>,
+    correlation_paths: &Vec<syn::LitStr>,
     status: &Option<CorrelationStatus>,
-) -> Result<Option<proc_macro2::TokenStream>> {
-    let Some(path_strs) = correlation_paths else {
-        return Ok(None);
-    };
-
+) -> Result<proc_macro2::TokenStream> {
     let mut field_accessors = BTreeMap::new();
 
-    for path_str in path_strs {
+    for path_str in correlation_paths {
         let field_accessor = parse_dotted_path(&path_str.value())?;
         field_accessors.insert(field_accessor.to_string(), field_accessor);
     }
@@ -168,7 +196,7 @@ fn generate_correlation_impl(
         CorrelationStatus::Any => quote!(::es_core::ExpectedCorrelationGroupStatus::Any),
     };
 
-    Ok(Some(quote! {
+    Ok(quote! {
         #[automatically_derived]
         impl #impl_generics ::es_core::Correlated for #name #ty_generics #where_clause {
             fn get_correlation_id(&self) -> Result<::es_core::CorrelationId, ::es_core::CorrelationIdError> {
@@ -180,5 +208,5 @@ fn generate_correlation_impl(
                 #status_token
             }
         }
-    }))
+    })
 }

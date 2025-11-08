@@ -1,0 +1,13 @@
+error: idempotency array cannot be empty
+
+       Example usage:
+         #[derive(InjectableEvent)]
+         #[es(awaits = [PaymentResponse], idempotency = ["user.id"], correlation = ["transaction_id"], status = { exists })]
+         pub struct PaymentRequested { ... }
+
+ --> tests/ui/errors/empty_idempotency_array.rs:2:10
+  |
+2 | #[derive(es_derive2::InjectableEvent)]
+  |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the derive macro `es_derive2::InjectableEvent` (in Nightly builds, run with -Z macro-backtrace for more info)

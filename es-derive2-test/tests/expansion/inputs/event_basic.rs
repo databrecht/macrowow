@@ -10,18 +10,13 @@ pub struct PaymentId {
     pub id: String,
 }
 
-/// Event demonstrating direct field access (simpler test first)
-#[derive(Debug, Clone, es_derive2::Event)]
+/// Event demonstrating field paths for idempotency and correlation
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
+#[es(idempotency = ["payment_id"], correlation = ["user_id"])]
 pub struct PaymentProcessed {
     pub payment: PaymentId,
     pub user: UserId,
     pub amount: u64,
-
-    // Direct field idempotency
-    #[es(idempotency)]
     pub payment_id: String,
-
-    // Direct field correlation with explicit status
-    #[es(correlation)]
     pub user_id: String,
 }

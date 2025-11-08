@@ -2,16 +2,18 @@
 ///
 /// Documents macro expansions as "live documentation" that stays in sync with code changes.
 /// For each test:
-/// 1. Input file (`tests/expand/your_name.rs`) - shows macro usage
-/// 2. Expanded file (`tests/expand/your_name.expanded.rs`) - full macro expansion from cargo-expand
-/// 3. Filtered output (`tests/expanded_simple/your_name.rs`) - only your macro's code with syntax highlighting
-/// 4. Snapshot (`.snap`) - same as filtered output, used by insta for testing
+/// 1. Input file (`tests/expansion/inputs/your_name.rs`) - shows macro usage
+/// 2. Expanded file (`tests/expansion/inputs/your_name.expanded.rs`) - full macro expansion from cargo-expand
+/// 3. Filtered output (`tests/expansion/outputs/your_name.rs`) - only your macro's code with syntax highlighting
+/// 4. Snapshot (`tests/expansion/snapshots/filtered_expansion__your_name.snap`) - same as filtered output, used by insta for testing
 ///
 /// # Usage
 ///
-/// 1. Create `tests/expand/your_name.rs` with your macro
+/// 1. Create `tests/expansion/inputs/your_name.rs` with your macro
 /// 2. Add: `snapshot_expansion!(your_name, &["pattern1", "pattern2"]);`
-/// 3. Run tests - auto-generates files
+/// 3. Run `cargo test`
+/// 4. Review filtered output in `tests/expansion/outputs/your_name.rs`
+/// 5. Accept snapshot with `cargo insta review`
 ///
 /// # Pattern matching
 ///
@@ -31,10 +33,10 @@ macro_rules! snapshot_expansion {
     ($test_name:ident, $patterns:expr) => {
         #[test]
         fn $test_name() {
-            let expanded_file = concat!("tests/expand/", stringify!($test_name), ".expanded.rs");
+            let expanded_file = concat!("tests/expansion/inputs/", stringify!($test_name), ".expanded.rs");
 
             if !std::path::Path::new(expanded_file).exists() {
-                macrotest::expand("tests/expand/*.rs");
+                macrotest::expand("tests/expansion/inputs/*.rs");
             }
 
             let expanded = std::fs::read_to_string(expanded_file)
@@ -43,12 +45,16 @@ macro_rules! snapshot_expansion {
             let filtered = filter_impls(&expanded, $patterns);
 
             // Write filtered output as a .rs file for easy reading with syntax highlighting
-            std::fs::create_dir_all("tests/expanded_simple").expect("Failed to create expanded_simple directory");
-            let filtered_file = concat!("tests/expanded_simple/", stringify!($test_name), ".rs");
+            std::fs::create_dir_all("tests/expansion/outputs").expect("Failed to create outputs directory");
+            let filtered_file = concat!("tests/expansion/outputs/", stringify!($test_name), ".rs");
             std::fs::write(filtered_file, &filtered)
                 .expect("Failed to write filtered file");
 
-            insta::assert_snapshot!(filtered);
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_path("expansion/snapshots");
+            settings.bind(|| {
+                insta::assert_snapshot!(filtered);
+            });
         }
     };
 }

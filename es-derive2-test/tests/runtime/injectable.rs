@@ -5,6 +5,15 @@ pub struct UserId {
     pub id: String,
 }
 
+// Test: Simple injectable event with minimal attributes
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
+#[es(awaits = [FooEvent])]
+#[es(idempotency = ["user.id"])]
+#[es(correlation = ["user.id"])]
+pub struct SimpleEvent {
+    pub user: UserId,
+}
+
 // Test: All attributes in ONE line
 #[derive(Debug, Clone, es_derive2::InjectableEvent)]
 #[es(awaits = [FooEvent], idempotency = ["user.id"], correlation = ["user.id"], status = { exists })]
@@ -30,7 +39,9 @@ pub struct MixedAttrs {
     pub user: UserId,
 }
 
-#[derive(Debug, Clone, es_derive2::Event)]
+#[derive(Debug, Clone, es_derive2::InjectableEvent)]
+#[es(idempotency = ["data"])]
+#[es(correlation = ["data"])]
 pub struct FooResponse {
     pub data: String,
 }
@@ -38,6 +49,15 @@ pub struct FooResponse {
 #[derive(Debug, Clone, es_derive2::AwaitedSet)]
 pub enum FooEvent {
     Response(FooResponse),
+}
+
+#[test]
+fn test_simple() {
+    let event = SimpleEvent {
+        user: UserId { id: "123".to_string() },
+    };
+    let _name = <SimpleEvent as Event>::NAME;
+    let _key = event.get_idempotency_key().unwrap();
 }
 
 #[test]
