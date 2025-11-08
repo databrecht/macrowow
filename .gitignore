@@ -19,3 +19,5 @@ Cargo.lock
 # Test outputs
 tests/expansion/inputs/*.expanded.rs
 tests/expansion/outputs/
+tests/ui/wip/
+**/wip/
