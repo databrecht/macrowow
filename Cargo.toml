@@ -1,0 +1,9 @@
+[workspace]
+members = ["es-derive2", "es-core", "es-derive2-test"]
+resolver = "2"
+
+[workspace.dependencies]
+syn = "2.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+darling = "0.20"

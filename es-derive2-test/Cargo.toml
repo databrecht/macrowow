@@ -1,0 +1,13 @@
+[package]
+name = "es-derive2-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+es-core = { path = "../es-core" }
+es-derive2 = { path = "../es-derive2" }
+eyre = "0.6"
+
+[dev-dependencies]
+insta = "1.0"
+macrotest = "1.0"
