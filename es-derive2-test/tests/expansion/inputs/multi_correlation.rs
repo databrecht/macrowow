@@ -1,4 +1,4 @@
-use es_core::*;
+use es_interface::*;
 
 /// Event with multiple correlation fields to test combination behavior
 #[derive(Debug, Clone, es_derive2::InjectableEvent)]

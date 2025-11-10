@@ -1,39 +1,34 @@
-use es_core::*;
+use es_interface::*;
 
 // Example Events
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, es_derive2::Event)]
 pub struct UserCreated {
     pub user_id: String,
     pub email: String,
 }
-event!(UserCreated);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, es_derive2::Event)]
 pub struct UserDeleted {
     pub user_id: String,
 }
-event!(UserDeleted);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, es_derive2::Event)]
 pub struct UserUpdated {
     pub user_id: String,
     pub email: String,
 }
-event!(UserUpdated);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, es_derive2::Event)]
 pub struct Transferred {
     pub transfer_id: String,
     pub amount: u64,
 }
-event!(Transferred);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, es_derive2::Event)]
 pub struct TransferFailed {
     pub transfer_id: String,
     pub reason: String,
 }
-event!(TransferFailed);
 
 // Event Sets
 #[derive(Debug, Clone, AwaitedSet)]

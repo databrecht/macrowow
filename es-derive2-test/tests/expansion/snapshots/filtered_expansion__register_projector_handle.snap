@@ -1,0 +1,11 @@
+---
+source: es-derive2-test/tests/filtered_expansion.rs
+expression: filtered
+snapshot_kind: text
+---
+impl ProjectorHandle<MyEvent> for MyProjector {
+    type Output = ();
+    async fn handle(&self, _event: MyEvent) -> Result<Self::Output, Report> {
+        Ok(())
+    }
+}

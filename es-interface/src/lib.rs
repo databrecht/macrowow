@@ -3,6 +3,12 @@ pub use downcast_rs::{impl_downcast, Downcast};
 pub use eyre::Report;
 use nutype::nutype;
 
+// Module declarations
+pub mod event;
+pub mod aggregate;
+pub mod subscriber;
+pub mod projector;
+
 // ============================================================================
 // Core Traits
 // ============================================================================
@@ -166,20 +172,9 @@ impl From<EventSetName> for serde_json::Value {
 }
 
 // ============================================================================
-// Helper macro for implementing Event trait
+// Handler Output Trait
 // ============================================================================
 
-#[macro_export]
-macro_rules! event {
-    ($name:ident) => {
-        impl $crate::DynEvent for $name {
-            fn name(&self) -> $crate::EventName<'static> {
-                Self::NAME
-            }
-        }
+/// Trait for handler output types
+pub trait HandlerOutput {}
 
-        impl $crate::Event for $name {
-            const NAME: $crate::EventName<'static> = $crate::EventName::new(stringify!($name));
-        }
-    };
-}

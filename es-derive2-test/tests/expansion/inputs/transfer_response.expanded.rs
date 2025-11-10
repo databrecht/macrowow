@@ -1,4 +1,4 @@
-use es_core::*;
+use es_interface::*;
 pub struct Transferred {
     pub transfer_id: String,
 }
@@ -32,13 +32,13 @@ impl ::core::cmp::PartialEq for Transferred {
         self.transfer_id == other.transfer_id
     }
 }
-impl ::es_core::DynEvent for Transferred {
-    fn name(&self) -> ::es_core::EventName<'static> {
+impl ::es_interface::DynEvent for Transferred {
+    fn name(&self) -> ::es_interface::EventName<'static> {
         Self::NAME
     }
 }
-impl ::es_core::Event for Transferred {
-    const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new("Transferred");
+impl ::es_interface::Event for Transferred {
+    const NAME: ::es_interface::EventName<'static> = ::es_interface::EventName::new("Transferred");
 }
 pub struct TransferFailed {
     pub transfer_id: String,
@@ -73,13 +73,13 @@ impl ::core::cmp::PartialEq for TransferFailed {
         self.transfer_id == other.transfer_id
     }
 }
-impl ::es_core::DynEvent for TransferFailed {
-    fn name(&self) -> ::es_core::EventName<'static> {
+impl ::es_interface::DynEvent for TransferFailed {
+    fn name(&self) -> ::es_interface::EventName<'static> {
         Self::NAME
     }
 }
-impl ::es_core::Event for TransferFailed {
-    const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new(
+impl ::es_interface::Event for TransferFailed {
+    const NAME: ::es_interface::EventName<'static> = ::es_interface::EventName::new(
         "TransferFailed",
     );
 }

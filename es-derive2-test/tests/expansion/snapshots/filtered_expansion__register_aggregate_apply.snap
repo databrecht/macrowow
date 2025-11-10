@@ -1,0 +1,8 @@
+---
+source: es-derive2-test/tests/filtered_expansion.rs
+expression: filtered
+snapshot_kind: text
+---
+impl AggregateApply<MyEvent> for MyAggregate {
+    fn apply(&mut self, _event: &MyEvent) {}
+}

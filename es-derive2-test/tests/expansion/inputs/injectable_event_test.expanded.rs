@@ -1,4 +1,4 @@
-use es_core::*;
+use es_interface::*;
 pub struct UserId {
     pub id: String,
 }
@@ -106,34 +106,34 @@ impl ::core::clone::Clone for PaymentAuthorizationReleaseRequestDispatched {
     }
 }
 #[automatically_derived]
-impl ::es_core::DynEvent for PaymentAuthorizationReleaseRequestDispatched {
-    fn name(&self) -> ::es_core::EventName<'static> {
+impl ::es_interface::DynEvent for PaymentAuthorizationReleaseRequestDispatched {
+    fn name(&self) -> ::es_interface::EventName<'static> {
         Self::NAME
     }
 }
 #[automatically_derived]
-impl ::es_core::Event for PaymentAuthorizationReleaseRequestDispatched {
-    const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new(
+impl ::es_interface::Event for PaymentAuthorizationReleaseRequestDispatched {
+    const NAME: ::es_interface::EventName<'static> = ::es_interface::EventName::new(
         "PaymentAuthorizationReleaseRequestDispatched",
     );
 }
 #[automatically_derived]
-impl ::es_core::ExpectsAwaitedSet<TransferRequested>
+impl ::es_interface::ExpectsAwaitedSet<TransferRequested>
 for PaymentAuthorizationReleaseRequestDispatched {}
-impl ::es_core::ExpectsAwaitedSet<PaymentProcessed>
+impl ::es_interface::ExpectsAwaitedSet<PaymentProcessed>
 for PaymentAuthorizationReleaseRequestDispatched {}
 #[automatically_derived]
-impl ::es_core::Idempotent for PaymentAuthorizationReleaseRequestDispatched {
+impl ::es_interface::Idempotent for PaymentAuthorizationReleaseRequestDispatched {
     fn get_idempotency_key(
         &self,
-    ) -> Result<::es_core::IdempotencyKey, ::es_core::IdempotencyKeyError> {
+    ) -> Result<::es_interface::IdempotencyKey, ::es_interface::IdempotencyKeyError> {
         let user_parts: Vec<String> = <[_]>::into_vec(
             ::alloc::boxed::box_new([
                 self.payment.id.to_string(),
                 self.transaction.ref_num.to_string(),
             ]),
         );
-        ::es_core::IdempotencyKey::try_new(
+        ::es_interface::IdempotencyKey::try_new(
             ::alloc::__export::must_use({
                 ::alloc::fmt::format(
                     format_args!(
@@ -146,14 +146,14 @@ impl ::es_core::Idempotent for PaymentAuthorizationReleaseRequestDispatched {
     }
 }
 #[automatically_derived]
-impl ::es_core::Correlated for PaymentAuthorizationReleaseRequestDispatched {
+impl ::es_interface::Correlated for PaymentAuthorizationReleaseRequestDispatched {
     fn get_correlation_id(
         &self,
-    ) -> Result<::es_core::CorrelationId, ::es_core::CorrelationIdError> {
+    ) -> Result<::es_interface::CorrelationId, ::es_interface::CorrelationIdError> {
         let user_parts: Vec<String> = <[_]>::into_vec(
             ::alloc::boxed::box_new([self.user.id.to_string()]),
         );
-        ::es_core::CorrelationId::try_new(
+        ::es_interface::CorrelationId::try_new(
             ::alloc::__export::must_use({
                 ::alloc::fmt::format(
                     format_args!(
@@ -166,8 +166,8 @@ impl ::es_core::Correlated for PaymentAuthorizationReleaseRequestDispatched {
     }
     fn expected_correlation_group_status(
         &self,
-    ) -> ::es_core::ExpectedCorrelationGroupStatus {
-        ::es_core::ExpectedCorrelationGroupStatus::Exists
+    ) -> ::es_interface::ExpectedCorrelationGroupStatus {
+        ::es_interface::ExpectedCorrelationGroupStatus::Exists
     }
 }
 pub struct TransferRequestedResponse {
@@ -195,14 +195,14 @@ impl ::core::clone::Clone for TransferRequestedResponse {
     }
 }
 #[automatically_derived]
-impl ::es_core::DynEvent for TransferRequestedResponse {
-    fn name(&self) -> ::es_core::EventName<'static> {
+impl ::es_interface::DynEvent for TransferRequestedResponse {
+    fn name(&self) -> ::es_interface::EventName<'static> {
         Self::NAME
     }
 }
 #[automatically_derived]
-impl ::es_core::Event for TransferRequestedResponse {
-    const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new(
+impl ::es_interface::Event for TransferRequestedResponse {
+    const NAME: ::es_interface::EventName<'static> = ::es_interface::EventName::new(
         "TransferRequestedResponse",
     );
 }
@@ -316,14 +316,14 @@ impl ::core::clone::Clone for PaymentProcessedResponse {
     }
 }
 #[automatically_derived]
-impl ::es_core::DynEvent for PaymentProcessedResponse {
-    fn name(&self) -> ::es_core::EventName<'static> {
+impl ::es_interface::DynEvent for PaymentProcessedResponse {
+    fn name(&self) -> ::es_interface::EventName<'static> {
         Self::NAME
     }
 }
 #[automatically_derived]
-impl ::es_core::Event for PaymentProcessedResponse {
-    const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new(
+impl ::es_interface::Event for PaymentProcessedResponse {
+    const NAME: ::es_interface::EventName<'static> = ::es_interface::EventName::new(
         "PaymentProcessedResponse",
     );
 }

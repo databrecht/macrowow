@@ -98,7 +98,11 @@ fn filter_impls(expanded: &str, patterns: &[&str]) -> String {
 
 // Generate test for each expansion file
 snapshot_expansion!(transfer_response, &["impl AwaitedSet", "impl HasEventSet"]);
-snapshot_expansion!(event_basic, &["impl ::es_core::Event", "impl ::es_core::Idempotent", "impl ::es_core::Correlated"]);
-snapshot_expansion!(event_with_injectable, &["impl ::es_core::DynEvent", "impl ::es_core::Event", "impl ::es_core::Idempotent", "impl ::es_core::Correlated", "impl ::es_core::AwaitableFor"]);
-snapshot_expansion!(event_with_dotted_paths, &["impl ::es_core::Event", "impl ::es_core::Idempotent", "impl ::es_core::Correlated"]);
-snapshot_expansion!(injectable_event_test, &["impl ::es_core::DynEvent", "impl ::es_core::Event", "impl ::es_core::ExpectsAwaitedSet", "impl ::es_core::Idempotent", "impl ::es_core::Correlated"]);
+snapshot_expansion!(event_basic, &["impl ::es_interface::Event", "impl ::es_interface::Idempotent", "impl ::es_interface::Correlated"]);
+snapshot_expansion!(event_with_injectable, &["impl ::es_interface::DynEvent", "impl ::es_interface::Event", "impl ::es_interface::Idempotent", "impl ::es_interface::Correlated", "impl ::es_interface::AwaitableFor"]);
+snapshot_expansion!(event_with_dotted_paths, &["impl ::es_interface::Event", "impl ::es_interface::Idempotent", "impl ::es_interface::Correlated"]);
+snapshot_expansion!(injectable_event_test, &["impl ::es_interface::DynEvent", "impl ::es_interface::Event", "impl ::es_interface::ExpectsAwaitedSet", "impl ::es_interface::Idempotent", "impl ::es_interface::Correlated"]);
+snapshot_expansion!(register_aggregate_apply, &["::es_interface::inventory::submit!", "impl AggregateApply"]);
+snapshot_expansion!(register_aggregate_handle, &["::es_interface::inventory::submit!", "impl AggregateHandle"]);
+snapshot_expansion!(register_subscriber_handle, &["::es_interface::inventory::submit!", "impl SubscriberHandle"]);
+snapshot_expansion!(register_projector_handle, &["::es_interface::inventory::submit!", "impl ProjectorHandle"]);

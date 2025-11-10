@@ -1,8 +1,11 @@
+use std::collections::BTreeMap;
+
 use deluxe::{ExtractAttributes, ParseMetaItem};
 use manyhow::Result;
 use quote::quote;
 use syn::DeriveInput;
-use std::collections::BTreeMap;
+
+use crate::shared::generate_event_impl;
 
 /// Parse a dotted path string like "user.id" into a token stream for field access.
 ///
@@ -13,7 +16,7 @@ fn parse_dotted_path(path_str: &str) -> syn::Result<proc_macro2::TokenStream> {
     if segments.is_empty() {
         return Err(syn::Error::new(
             proc_macro2::Span::call_site(),
-            "Path cannot be empty"
+            "Path cannot be empty",
         ));
     }
 
@@ -27,7 +30,7 @@ fn parse_dotted_path(path_str: &str) -> syn::Result<proc_macro2::TokenStream> {
 
 /// Correlation status determining expected state of correlation group.
 #[derive(ParseMetaItem, Debug, Clone, Copy, PartialEq, Eq, Default)]
-enum CorrelationStatus {
+enum ParsedCorrelationStatus {
     /// Correlation group should be new (first event in the group)
     #[default]
     #[deluxe(rename = new)]
@@ -63,7 +66,7 @@ struct InjectableEventAttrs {
     ///
     /// Example: #[es(status = { exists })]
     #[deluxe(default)]
-    status: Option<CorrelationStatus>,
+    status: Option<ParsedCorrelationStatus>,
 }
 
 const USAGE_EXAMPLE: &str = r#"
@@ -77,9 +80,8 @@ Example usage:
 
 pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
     // Extract attributes using Deluxe
-    let attrs: InjectableEventAttrs = deluxe::extract_attributes(&mut input).map_err(|e| {
-        syn::Error::new(e.span(), format!("{}{}", e, USAGE_EXAMPLE))
-    })?;
+    let attrs: InjectableEventAttrs = deluxe::extract_attributes(&mut input)
+        .map_err(|e| syn::Error::new(e.span(), format!("{}{}", e, USAGE_EXAMPLE)))?;
 
     let name = &input.ident;
 
@@ -87,31 +89,21 @@ pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
     if attrs.idempotency.is_empty() {
         return Err(syn::Error::new_spanned(
             &input,
-            format!("idempotency array cannot be empty{}", USAGE_EXAMPLE)
-        ).into());
+            format!("idempotency array cannot be empty{}", USAGE_EXAMPLE),
+        )
+        .into());
     }
     if attrs.correlation.is_empty() {
         return Err(syn::Error::new_spanned(
             &input,
-            format!("correlation array cannot be empty{}", USAGE_EXAMPLE)
-        ).into());
+            format!("correlation array cannot be empty{}", USAGE_EXAMPLE),
+        )
+        .into());
     }
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     // Basic Event trait implementations
-    let mut event_impl = quote! {
-        #[automatically_derived]
-        impl #impl_generics ::es_core::DynEvent for #name #ty_generics #where_clause {
-            fn name(&self) -> ::es_core::EventName<'static> {
-                Self::NAME
-            }
-        }
-
-        #[automatically_derived]
-        impl #impl_generics ::es_core::Event for #name #ty_generics #where_clause {
-            const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new(stringify!(#name));
-        }
-    };
+    let mut event_impl = generate_event_impl(name, &impl_generics, &ty_generics, where_clause);
 
     // Add ExpectsAwaitedSet impls if awaits attribute is present
     if let Some(awaited_sets) = &attrs.awaits {
@@ -119,7 +111,7 @@ pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
         event_impl.extend(quote! {
             #[automatically_derived]
             #(
-                impl #impl_generics ::es_core::ExpectsAwaitedSet<#awaited_sets_vec> for #name #ty_generics #where_clause {}
+                impl #impl_generics ::es_interface::ExpectsAwaitedSet<#awaited_sets_vec> for #name #ty_generics #where_clause {}
             )*
         });
     }
@@ -127,11 +119,24 @@ pub(crate) fn injectable_event_impl(mut input: DeriveInput) -> Result {
     let mut output = event_impl;
 
     // Implement Idempotent (required)
-    let idempotency_impl = generate_idempotency_impl(&name, &impl_generics, &ty_generics, &where_clause, &attrs.idempotency)?;
+    let idempotency_impl = generate_idempotency_impl(
+        &name,
+        &impl_generics,
+        &ty_generics,
+        &where_clause,
+        &attrs.idempotency,
+    )?;
     output.extend(idempotency_impl);
 
     // Implement Correlated (required)
-    let correlation_impl = generate_correlation_impl(&name, &impl_generics, &ty_generics, &where_clause, &attrs.correlation, &attrs.status)?;
+    let correlation_impl = generate_correlation_impl(
+        &name,
+        &impl_generics,
+        &ty_generics,
+        &where_clause,
+        &attrs.correlation,
+        &attrs.status,
+    )?;
     output.extend(correlation_impl);
 
     Ok(output)
@@ -159,10 +164,10 @@ fn generate_idempotency_impl(
 
     Ok(quote! {
         #[automatically_derived]
-        impl #impl_generics ::es_core::Idempotent for #name #ty_generics #where_clause {
-            fn get_idempotency_key(&self) -> Result<::es_core::IdempotencyKey, ::es_core::IdempotencyKeyError> {
+        impl #impl_generics ::es_interface::Idempotent for #name #ty_generics #where_clause {
+            fn get_idempotency_key(&self) -> Result<::es_interface::IdempotencyKey, ::es_interface::IdempotencyKeyError> {
                 let user_parts: Vec<String> = vec![#(#field_accessor_iter.to_string()),*];
-                ::es_core::IdempotencyKey::try_new(format!("{}-{}", stringify!(#name), user_parts.join("-")))
+                ::es_interface::IdempotencyKey::try_new(format!("{}-{}", stringify!(#name), user_parts.join("-")))
             }
         }
     })
@@ -178,7 +183,7 @@ fn generate_correlation_impl(
     ty_generics: &syn::TypeGenerics,
     where_clause: &Option<&syn::WhereClause>,
     correlation_paths: &Vec<syn::LitStr>,
-    status: &Option<CorrelationStatus>,
+    status: &Option<ParsedCorrelationStatus>,
 ) -> Result<proc_macro2::TokenStream> {
     let mut field_accessors = BTreeMap::new();
 
@@ -190,21 +195,23 @@ fn generate_correlation_impl(
     let field_accessor_iter = field_accessors.values();
 
     // status is Option<CorrelationStatus>, default to New
-    let status_token = match status.unwrap_or(CorrelationStatus::New) {
-        CorrelationStatus::New => quote!(::es_core::ExpectedCorrelationGroupStatus::New),
-        CorrelationStatus::Exists => quote!(::es_core::ExpectedCorrelationGroupStatus::Exists),
-        CorrelationStatus::Any => quote!(::es_core::ExpectedCorrelationGroupStatus::Any),
+    let status_token = match status.unwrap_or(ParsedCorrelationStatus::New) {
+        ParsedCorrelationStatus::New => quote!(::es_interface::ExpectedCorrelationGroupStatus::New),
+        ParsedCorrelationStatus::Exists => {
+            quote!(::es_interface::ExpectedCorrelationGroupStatus::Exists)
+        }
+        ParsedCorrelationStatus::Any => quote!(::es_interface::ExpectedCorrelationGroupStatus::Any),
     };
 
     Ok(quote! {
         #[automatically_derived]
-        impl #impl_generics ::es_core::Correlated for #name #ty_generics #where_clause {
-            fn get_correlation_id(&self) -> Result<::es_core::CorrelationId, ::es_core::CorrelationIdError> {
+        impl #impl_generics ::es_interface::Correlated for #name #ty_generics #where_clause {
+            fn get_correlation_id(&self) -> Result<::es_interface::CorrelationId, ::es_interface::CorrelationIdError> {
                 let user_parts: Vec<String> = vec![#(#field_accessor_iter.to_string()),*];
-                ::es_core::CorrelationId::try_new(format!("{}-{}", stringify!(#name), user_parts.join("-")))
+                ::es_interface::CorrelationId::try_new(format!("{}-{}", stringify!(#name), user_parts.join("-")))
             }
 
-            fn expected_correlation_group_status(&self) -> ::es_core::ExpectedCorrelationGroupStatus {
+            fn expected_correlation_group_status(&self) -> ::es_interface::ExpectedCorrelationGroupStatus {
                 #status_token
             }
         }

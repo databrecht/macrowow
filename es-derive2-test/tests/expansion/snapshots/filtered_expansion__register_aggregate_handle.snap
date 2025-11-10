@@ -1,0 +1,9 @@
+---
+source: es-derive2-test/tests/filtered_expansion.rs
+expression: filtered
+snapshot_kind: text
+---
+impl AggregateHandle<MyEvent> for MyAggregate {
+    type Output = ();
+    fn handle(&self, _event: MyEvent) -> Self::Output {}
+}

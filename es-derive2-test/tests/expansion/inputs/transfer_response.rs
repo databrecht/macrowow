@@ -1,4 +1,4 @@
-use es_core::*;
+use es_interface::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Transferred {

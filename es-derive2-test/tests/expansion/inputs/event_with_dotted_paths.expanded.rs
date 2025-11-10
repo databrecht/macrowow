@@ -1,4 +1,4 @@
-use es_core::*;
+use es_interface::*;
 pub struct UserId {
     pub id: String,
 }
@@ -78,29 +78,29 @@ impl ::core::clone::Clone for PaymentProcessed {
     }
 }
 #[automatically_derived]
-impl ::es_core::DynEvent for PaymentProcessed {
-    fn name(&self) -> ::es_core::EventName<'static> {
+impl ::es_interface::DynEvent for PaymentProcessed {
+    fn name(&self) -> ::es_interface::EventName<'static> {
         Self::NAME
     }
 }
 #[automatically_derived]
-impl ::es_core::Event for PaymentProcessed {
-    const NAME: ::es_core::EventName<'static> = ::es_core::EventName::new(
+impl ::es_interface::Event for PaymentProcessed {
+    const NAME: ::es_interface::EventName<'static> = ::es_interface::EventName::new(
         "PaymentProcessed",
     );
 }
 #[automatically_derived]
-impl ::es_core::Idempotent for PaymentProcessed
+impl ::es_interface::Idempotent for PaymentProcessed
 where
     PaymentId: std::fmt::Display,
 {
     fn get_idempotency_key(
         &self,
-    ) -> Result<::es_core::IdempotencyKey, ::es_core::IdempotencyKeyError> {
+    ) -> Result<::es_interface::IdempotencyKey, ::es_interface::IdempotencyKeyError> {
         let user_parts: Vec<String> = <[_]>::into_vec(
             ::alloc::boxed::box_new([self.payment.id.to_string()]),
         );
-        ::es_core::IdempotencyKey::try_new(
+        ::es_interface::IdempotencyKey::try_new(
             ::alloc::__export::must_use({
                 ::alloc::fmt::format(
                     format_args!("{0}-{1}", "PaymentProcessed", user_parts.join("-")),
@@ -110,17 +110,17 @@ where
     }
 }
 #[automatically_derived]
-impl ::es_core::Correlated for PaymentProcessed
+impl ::es_interface::Correlated for PaymentProcessed
 where
     UserId: std::fmt::Display,
 {
     fn get_correlation_id(
         &self,
-    ) -> Result<::es_core::CorrelationId, ::es_core::CorrelationIdError> {
+    ) -> Result<::es_interface::CorrelationId, ::es_interface::CorrelationIdError> {
         let user_parts: Vec<String> = <[_]>::into_vec(
             ::alloc::boxed::box_new([self.user.id.to_string()]),
         );
-        ::es_core::CorrelationId::try_new(
+        ::es_interface::CorrelationId::try_new(
             ::alloc::__export::must_use({
                 ::alloc::fmt::format(
                     format_args!("{0}-{1}", "PaymentProcessed", user_parts.join("-")),
@@ -130,7 +130,7 @@ where
     }
     fn expected_correlation_group_status(
         &self,
-    ) -> ::es_core::ExpectedCorrelationGroupStatus {
-        ::es_core::ExpectedCorrelationGroupStatus::Exists
+    ) -> ::es_interface::ExpectedCorrelationGroupStatus {
+        ::es_interface::ExpectedCorrelationGroupStatus::Exists
     }
 }

@@ -1,4 +1,4 @@
-use es_core::*;
+use es_interface::*;
 
 #[derive(Debug, Clone, es_derive2::InjectableEvent)]
 #[es(awaits = [TransferResponse, PaymentResponse], idempotency = ["request_id"], correlation = ["user_id"])]

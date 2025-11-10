@@ -1,5 +1,5 @@
 [workspace]
-members = ["es-derive2", "es-core", "es-derive2-test"]
+members = ["es-derive2", "es-interface", "es-derive2-test"]
 resolver = "2"
 
 [workspace.dependencies]
